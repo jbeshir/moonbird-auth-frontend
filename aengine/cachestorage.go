@@ -13,7 +13,7 @@ type CacheStorage struct {
 }
 
 func (cs *CacheStorage) Get(ctx context.Context, key string, v interface{}) error {
-	_, err := cs.Codec.Get(ctx, key, v)
+	_, err := cs.Codec.Get(ctx, cs.Prefix + key, v)
 	return err
 }
 
@@ -25,12 +25,16 @@ func (cs *CacheStorage) Set(ctx context.Context, key string, v interface{}) erro
 	return cs.Codec.Set(ctx, cacheItem)
 }
 
+func (cs *CacheStorage) Delete(ctx context.Context, key string) error {
+	return memcache.Delete(ctx, key)
+}
+
+// Can only marshal fixed-size data as defined by the encoding/binary package.
 var BinaryMemcacheCodec = memcache.Codec{
 	Marshal:   binaryMarshal,
 	Unmarshal: binaryUnmarshal,
 }
 
-// Can only marshal fixed-size data as defined by the encoding/binary package.
 func binaryMarshal(v interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	err := binary.Write(&buf, binary.BigEndian, v)
@@ -40,7 +44,6 @@ func binaryMarshal(v interface{}) ([]byte, error) {
 	return buf.Bytes(), nil
 }
 
-// Can only unmarshal fixed-size data as defined by the encoding/binary package.
 func binaryUnmarshal(data []byte, v interface{}) error {
 	return binary.Read(bytes.NewReader(data), binary.BigEndian, v)
 }
