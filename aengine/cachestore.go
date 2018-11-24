@@ -7,17 +7,17 @@ import (
 	"google.golang.org/appengine/memcache"
 )
 
-type CacheStorage struct {
+type CacheStore struct {
 	Prefix string
 	Codec  memcache.Codec
 }
 
-func (cs *CacheStorage) Get(ctx context.Context, key string, v interface{}) error {
-	_, err := cs.Codec.Get(ctx, cs.Prefix + key, v)
+func (cs *CacheStore) Get(ctx context.Context, key string, v interface{}) error {
+	_, err := cs.Codec.Get(ctx, cs.Prefix+key, v)
 	return err
 }
 
-func (cs *CacheStorage) Set(ctx context.Context, key string, v interface{}) error {
+func (cs *CacheStore) Set(ctx context.Context, key string, v interface{}) error {
 	cacheItem := &memcache.Item{
 		Key:    cs.Prefix + key,
 		Object: v,
@@ -25,7 +25,7 @@ func (cs *CacheStorage) Set(ctx context.Context, key string, v interface{}) erro
 	return cs.Codec.Set(ctx, cacheItem)
 }
 
-func (cs *CacheStorage) Delete(ctx context.Context, key string) error {
+func (cs *CacheStore) Delete(ctx context.Context, key string) error {
 	return memcache.Delete(ctx, key)
 }
 
