@@ -26,7 +26,7 @@ func (cs *CacheStore) Set(ctx context.Context, key string, v interface{}) error 
 }
 
 func (cs *CacheStore) Delete(ctx context.Context, key string) error {
-	return memcache.Delete(ctx, key)
+	return memcache.Delete(ctx, cs.Prefix+key)
 }
 
 // Can only marshal fixed-size data as defined by the encoding/binary package.
