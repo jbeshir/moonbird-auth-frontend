@@ -8,6 +8,11 @@ import (
 )
 
 func TestCacheStore_Delete(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -44,6 +49,11 @@ func TestCacheStore_Delete(t *testing.T) {
 }
 
 func TestCacheStore_Get(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -75,6 +85,11 @@ func TestCacheStore_Get(t *testing.T) {
 }
 
 func TestCacheStore_Get_CacheMiss(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -94,6 +109,11 @@ func TestCacheStore_Get_CacheMiss(t *testing.T) {
 }
 
 func TestCacheStore_Set(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)

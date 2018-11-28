@@ -9,6 +9,11 @@ import (
 )
 
 func TestPersistentStore_GetOpaque(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -43,6 +48,11 @@ func TestPersistentStore_GetOpaque(t *testing.T) {
 }
 
 func TestPersistentStore_GetOpaque_NoEntity(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -61,6 +71,11 @@ func TestPersistentStore_GetOpaque_NoEntity(t *testing.T) {
 }
 
 func TestPersistentStore_GetOpaque_InvalidEntity(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -89,6 +104,11 @@ func TestPersistentStore_GetOpaque_InvalidEntity(t *testing.T) {
 }
 
 func TestPersistentStore_GetOpaque_InvalidEntityContent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -116,6 +136,11 @@ func TestPersistentStore_GetOpaque_InvalidEntityContent(t *testing.T) {
 }
 
 func TestPersistentStore_SetOpaque(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -147,6 +172,11 @@ func TestPersistentStore_SetOpaque(t *testing.T) {
 }
 
 func TestPersistentStore_SetOpaque_Invalid(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
@@ -166,6 +196,11 @@ func TestPersistentStore_SetOpaque_Invalid(t *testing.T) {
 }
 
 func Test_PersistentStore_makeKey(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+		return
+	}
+
 	ctx, done, err := aetest.NewContext()
 	if err != nil {
 		t.Fatal(err)
