@@ -11,7 +11,6 @@ import (
 func TestPersistentStore_GetOpaque(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -50,7 +49,6 @@ func TestPersistentStore_GetOpaque(t *testing.T) {
 func TestPersistentStore_GetOpaque_NoEntity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -73,7 +71,6 @@ func TestPersistentStore_GetOpaque_NoEntity(t *testing.T) {
 func TestPersistentStore_GetOpaque_InvalidEntity(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -106,7 +103,6 @@ func TestPersistentStore_GetOpaque_InvalidEntity(t *testing.T) {
 func TestPersistentStore_GetOpaque_InvalidEntityContent(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -138,7 +134,6 @@ func TestPersistentStore_GetOpaque_InvalidEntityContent(t *testing.T) {
 func TestPersistentStore_SetOpaque(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -174,7 +169,6 @@ func TestPersistentStore_SetOpaque(t *testing.T) {
 func TestPersistentStore_SetOpaque_Invalid(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -198,7 +192,6 @@ func TestPersistentStore_SetOpaque_Invalid(t *testing.T) {
 func Test_PersistentStore_makeKey(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -222,6 +215,8 @@ func Test_PersistentStore_makeKey(t *testing.T) {
 }
 
 func TestOpaqueContent_Marshal(t *testing.T) {
+	t.Parallel()
+
 	o := &opaqueContent{}
 
 	data := map[string]interface{}{
@@ -238,6 +233,8 @@ func TestOpaqueContent_Marshal(t *testing.T) {
 }
 
 func TestOpaqueContent_Unmarshal(t *testing.T) {
+	t.Parallel()
+
 	o := &opaqueContent{
 		Content: []byte(`{"Foo":"Bar"}`),
 	}

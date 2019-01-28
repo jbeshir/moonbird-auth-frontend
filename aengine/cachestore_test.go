@@ -10,7 +10,6 @@ import (
 func TestCacheStore_Delete(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -51,7 +50,6 @@ func TestCacheStore_Delete(t *testing.T) {
 func TestCacheStore_Get(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -87,7 +85,6 @@ func TestCacheStore_Get(t *testing.T) {
 func TestCacheStore_Get_CacheMiss(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -111,7 +108,6 @@ func TestCacheStore_Get_CacheMiss(t *testing.T) {
 func TestCacheStore_Set(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
-		return
 	}
 
 	ctx, done, err := aetest.NewContext()
@@ -142,6 +138,8 @@ func TestCacheStore_Set(t *testing.T) {
 }
 
 func TestBinaryMemcacheCodec_Marshal(t *testing.T) {
+	t.Parallel()
+
 	key, err := BinaryMemcacheCodec.Marshal(&[2]float64{0.4, 0.1})
 	if err != nil {
 		t.Errorf("Unexpected error from Marshal: %s", err)
@@ -156,6 +154,8 @@ func TestBinaryMemcacheCodec_Marshal(t *testing.T) {
 }
 
 func TestBinaryMemcacheCodec_Marshal_Illegal(t *testing.T) {
+	t.Parallel()
+
 	data := "bluh"
 	_, err := BinaryMemcacheCodec.Marshal(&data)
 	if err == nil {
@@ -164,6 +164,8 @@ func TestBinaryMemcacheCodec_Marshal_Illegal(t *testing.T) {
 }
 
 func TestBinaryMemcacheCodec_Unmarshal(t *testing.T) {
+	t.Parallel()
+
 	input := []byte{
 		0x3F, 0xD9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A, // Big-endian 0.4
 		0x3F, 0xB9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A, // Big-endian 0.1
@@ -181,6 +183,8 @@ func TestBinaryMemcacheCodec_Unmarshal(t *testing.T) {
 }
 
 func TestBinaryMemcacheCodec_Unmarshal_Illegal(t *testing.T) {
+	t.Parallel()
+
 	input := []byte{
 		0x3F, 0xD9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A, // Big-endian 0.4
 		0x3F, 0xB9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A, // Big-endian 0.1
