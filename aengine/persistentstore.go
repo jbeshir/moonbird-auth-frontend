@@ -40,6 +40,10 @@ func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v in
 	return err
 }
 
+func (ps *PersistentStore) Transact(ctx context.Context, f func(ctx context.Context) error) error {
+	return datastore.RunInTransaction(ctx, f, nil)
+}
+
 func (ps *PersistentStore) makeKey(ctx context.Context, kind, key string) *datastore.Key {
 	return datastore.NewKey(ctx, kind, ps.Prefix+key, 0, nil)
 }
