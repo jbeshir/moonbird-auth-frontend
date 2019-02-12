@@ -7,9 +7,9 @@ import (
 )
 
 type AuthenticatedClientMaker struct {
-	Scope string
+	Scope []string
 }
 
 func (cm *AuthenticatedClientMaker) MakeClient(ctx context.Context) (*http.Client, error) {
-	return google.DefaultClient(ctx, cm.Scope)
+	return google.DefaultClient(ctx, cm.Scope...)
 }

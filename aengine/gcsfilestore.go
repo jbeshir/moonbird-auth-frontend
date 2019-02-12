@@ -4,11 +4,9 @@ import (
 	"cloud.google.com/go/storage"
 	"context"
 	"io/ioutil"
-	"net/http"
 )
 
 type GcsFileStore struct {
-	Client *http.Client
 	Bucket string
 	Prefix string
 }
