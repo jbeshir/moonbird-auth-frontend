@@ -47,6 +47,46 @@ func TestCacheStore_Delete(t *testing.T) {
 	}
 }
 
+func TestCacheStore_Flush(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	cacheItem := &memcache.Item{
+		Key:    "FooBar",
+		Object: "bluh",
+	}
+	err = memcache.JSON.Set(ctx, cacheItem)
+	if err != nil {
+		t.Fatalf("Unexpected error adding to memcache: %s", err)
+	}
+
+	cs := &CacheStore{
+		Prefix: "Foo",
+		Codec:  memcache.JSON,
+	}
+	err = cs.Flush(ctx)
+	if err != nil {
+		t.Errorf("Unexpected error from Delete: %s", err)
+	}
+
+	var data string
+	_, err = memcache.JSON.Get(ctx, "FooBar", &data)
+	if err != memcache.ErrCacheMiss {
+		if err == nil {
+			t.Errorf("Found memcache data still present, expected deleted")
+		} else {
+			t.Errorf("Expected cache miss error, got: %s", err)
+		}
+	}
+}
+
 func TestCacheStore_Get(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
@@ -100,8 +140,8 @@ func TestCacheStore_Get_CacheMiss(t *testing.T) {
 
 	var data string
 	err = cs.Get(ctx, "Bar", &data)
-	if err != memcache.ErrCacheMiss {
-		t.Errorf("Expected ErrCacheMiss from Get, got: %s", err)
+	if err == nil {
+		t.Errorf("Expected non-nil error from Get, got nil")
 	}
 }
 

@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"github.com/jbeshir/moonbird-predictor-frontend/ctxlogrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/appengine/memcache"
 )
 
@@ -14,11 +16,17 @@ type CacheStore struct {
 }
 
 func (cs *CacheStore) Get(ctx context.Context, key string, v interface{}) error {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"prefix": cs.Prefix, "key": key}).Debug("cache get")
+
 	_, err := cs.Codec.Get(ctx, cs.Prefix+key, v)
 	return errors.Wrap(err, "")
 }
 
 func (cs *CacheStore) Set(ctx context.Context, key string, v interface{}) error {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"prefix": cs.Prefix, "key": key}).Debug("cache set")
+
 	cacheItem := &memcache.Item{
 		Key:    cs.Prefix + key,
 		Object: v,
@@ -28,7 +36,17 @@ func (cs *CacheStore) Set(ctx context.Context, key string, v interface{}) error 
 }
 
 func (cs *CacheStore) Delete(ctx context.Context, key string) error {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"prefix": cs.Prefix, "key": key}).Debug("cache delete")
+
 	return memcache.Delete(ctx, cs.Prefix+key)
+}
+
+func (cs *CacheStore) Flush(ctx context.Context) error {
+	l := ctxlogrus.Get(ctx)
+	l.Debug("cache clear - full purge")
+
+	return memcache.Flush(ctx)
 }
 
 // Can only marshal fixed-size data as defined by the encoding/binary package.

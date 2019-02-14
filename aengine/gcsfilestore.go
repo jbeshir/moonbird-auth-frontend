@@ -3,7 +3,9 @@ package aengine
 import (
 	"cloud.google.com/go/storage"
 	"context"
+	"github.com/jbeshir/moonbird-predictor-frontend/ctxlogrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"io/ioutil"
 )
 
@@ -13,6 +15,9 @@ type GcsFileStore struct {
 }
 
 func (fs *GcsFileStore) Load(ctx context.Context, path string) ([]byte, error) {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"bucket": fs.Bucket, "prefix": fs.Prefix, "path": path}).Debug("file load")
+
 	storageService, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil, errors.Wrap(err, "")
@@ -32,6 +37,9 @@ func (fs *GcsFileStore) Load(ctx context.Context, path string) ([]byte, error) {
 }
 
 func (fs *GcsFileStore) Save(ctx context.Context, path string, content []byte) error {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"bucket": fs.Bucket, "prefix": fs.Prefix, "path": path}).Debug("file save")
+
 	storageService, err := storage.NewClient(ctx)
 	if err != nil {
 		return nil

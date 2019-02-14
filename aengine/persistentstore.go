@@ -3,7 +3,9 @@ package aengine
 import (
 	"context"
 	"encoding/json"
+	"github.com/jbeshir/moonbird-predictor-frontend/ctxlogrus"
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/appengine/datastore"
 )
 
@@ -12,6 +14,8 @@ type PersistentStore struct {
 }
 
 func (ps *PersistentStore) GetOpaque(ctx context.Context, kind, key string, v interface{}) error {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore get")
 
 	opaque := &opaqueContent{}
 	k := ps.makeKey(ctx, kind, key)
@@ -24,6 +28,8 @@ func (ps *PersistentStore) GetOpaque(ctx context.Context, kind, key string, v in
 }
 
 func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v interface{}) error {
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore set")
 
 	opaque := &opaqueContent{}
 	err := opaque.Marshal(v)
@@ -37,7 +43,14 @@ func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v in
 }
 
 func (ps *PersistentStore) Transact(ctx context.Context, f func(ctx context.Context) error) error {
-	return datastore.RunInTransaction(ctx, f, nil)
+	l := ctxlogrus.Get(ctx)
+	l.Debug("datastore transaction start")
+
+	err := datastore.RunInTransaction(ctx, f, nil)
+
+	l.Debug("datastore transaction end")
+
+	return errors.Wrap(err, "")
 }
 
 func (ps *PersistentStore) makeKey(ctx context.Context, kind, key string) *datastore.Key {
