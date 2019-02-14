@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/binary"
+	"github.com/pkg/errors"
 	"google.golang.org/appengine/memcache"
 )
 
@@ -14,7 +15,7 @@ type CacheStore struct {
 
 func (cs *CacheStore) Get(ctx context.Context, key string, v interface{}) error {
 	_, err := cs.Codec.Get(ctx, cs.Prefix+key, v)
-	return err
+	return errors.Wrap(err, "")
 }
 
 func (cs *CacheStore) Set(ctx context.Context, key string, v interface{}) error {
@@ -22,7 +23,8 @@ func (cs *CacheStore) Set(ctx context.Context, key string, v interface{}) error 
 		Key:    cs.Prefix + key,
 		Object: v,
 	}
-	return cs.Codec.Set(ctx, cacheItem)
+
+	return errors.Wrap(cs.Codec.Set(ctx, cacheItem), "")
 }
 
 func (cs *CacheStore) Delete(ctx context.Context, key string) error {
@@ -39,7 +41,7 @@ func binaryMarshal(v interface{}) ([]byte, error) {
 	var buf bytes.Buffer
 	err := binary.Write(&buf, binary.BigEndian, v)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrap(err, "")
 	}
 	return buf.Bytes(), nil
 }
