@@ -3,12 +3,132 @@ package aengine
 import (
 	"context"
 	"errors"
+	"github.com/jbeshir/moonbird-predictor-frontend/data"
 	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 	"math"
 	"reflect"
+	"strings"
 	"testing"
 )
+
+func makeTestProperties() (properties []data.Property) {
+	properties = append(properties, data.Property{
+		Name:  "Foo1",
+		Value: "Bar",
+	})
+	properties = append(properties, data.Property{
+		Name:  "Foo2",
+		Value: int64(7),
+	})
+	properties = append(properties, data.Property{
+		Name:  "Foo3",
+		Value: true,
+	})
+	properties = append(properties, data.Property{
+		Name:  "Foo4",
+		Value: float64(0.3),
+	})
+	return
+}
+
+func TestPropertiesToAppEngine(t *testing.T) {
+	from := makeTestProperties()
+	to, err := propertiesToAppEngine(from)
+	if err != nil {
+		t.Errorf("Unexpected error converting properties to appengine format: %s", err)
+	}
+	if len(to) != len(from) {
+		t.Errorf("Made a list of %d properties, expected %d", len(to), len(from))
+	}
+
+	for i := 0; i < len(to); i++ {
+		if to[i].Name != from[i].Name {
+			t.Errorf("Property %d had name '%s', expected '%s'", i, to[i].Name, from[i].Name)
+		}
+		if to[i].Value != from[i].Value {
+			t.Errorf("Property %d had value '%v', expected '%v'", i, to[i].Value, from[i].Value)
+		}
+		if to[i].NoIndex {
+			t.Errorf("Property %d had no index set, this is incorrect", i)
+		}
+		if to[i].Multiple {
+			t.Errorf("Property %d had multiple set, this is incorrect", i)
+		}
+
+	}
+}
+
+func TestPropertiesToAppEngine_InvalidValue(t *testing.T) {
+	from := makeTestProperties()
+	from[1].Value = 7
+
+	to, err := propertiesToAppEngine(from)
+	if err == nil || !strings.Contains(err.Error(), "property 'Foo2' had invalid type: int") {
+		t.Errorf("Did not receive expected error from conversion of properties to appengine format")
+	}
+	if len(to) != 0 {
+		t.Errorf("Expected zero-length properties output with error, got non-zero-length properties list")
+	}
+}
+
+func TestPropertiesToAppEngine_InvalidName(t *testing.T) {
+	from := makeTestProperties()
+	from[2].Name = "Content"
+
+	to, err := propertiesToAppEngine(from)
+	if err == nil || !strings.Contains(err.Error(), "property 'Content' had reserved name") {
+		t.Errorf("Did not receive expected error from conversion of properties to appengine format")
+	}
+	if len(to) != 0 {
+		t.Errorf("Expected zero-length properties output with error, got non-zero-length properties list")
+	}
+}
+
+func TestPersistentStore_Get(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+	aeProperties = append(aeProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`{"Foo":"Bar"}`),
+		NoIndex: true,
+	})
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	expectedData := map[string]interface{}{
+		"Foo": "Bar",
+	}
+	var d map[string]interface{}
+	properties, err := ps.Get(ctx, "Baz", "Bar", &d)
+	if err != nil {
+		t.Errorf("Unexpected error from Get: %s", err)
+	}
+	if !reflect.DeepEqual(properties, expectedProperties) {
+		t.Errorf("Unmarshalled properties did not equal expected properties")
+	}
+	if !reflect.DeepEqual(d, expectedData) {
+		t.Errorf("Unmarshalled d did not equal expected d")
+	}
+}
 
 func TestPersistentStore_GetOpaque(t *testing.T) {
 	if testing.Short() {
@@ -38,12 +158,12 @@ func TestPersistentStore_GetOpaque(t *testing.T) {
 	expectedData := map[string]interface{}{
 		"Foo": "Bar",
 	}
-	var data map[string]interface{}
-	err = ps.GetOpaque(ctx, "Baz", "Bar", &data)
+	var d map[string]interface{}
+	err = ps.GetOpaque(ctx, "Baz", "Bar", &d)
 	if err != nil {
 		t.Errorf("Unexpected error from GetOpaque: %s", err)
 	}
-	if !reflect.DeepEqual(data, expectedData) {
+	if !reflect.DeepEqual(d, expectedData) {
 		t.Errorf("Unmarshalled data did not equal expected data")
 	}
 }
@@ -63,8 +183,8 @@ func TestPersistentStore_GetOpaque_NoEntity(t *testing.T) {
 		Prefix: "Foo",
 	}
 
-	var data map[string]interface{}
-	err = ps.GetOpaque(ctx, "Baz", "Bar", &data)
+	var d map[string]interface{}
+	err = ps.GetOpaque(ctx, "Baz", "Bar", &d)
 	if err == nil {
 		t.Errorf("Expected error from GetOpaque, got nil error")
 	}
@@ -95,8 +215,8 @@ func TestPersistentStore_GetOpaque_InvalidEntity(t *testing.T) {
 		t.Fatalf("Unexpected error writing data to datastore: %s", err)
 	}
 
-	var data map[string]interface{}
-	err = ps.GetOpaque(ctx, "Baz", "Bar", &data)
+	var d map[string]interface{}
+	err = ps.GetOpaque(ctx, "Baz", "Bar", &d)
 	if err == nil {
 		t.Errorf("Expected error from GetOpaque, got nil error")
 	}
@@ -126,8 +246,8 @@ func TestPersistentStore_GetOpaque_InvalidEntityContent(t *testing.T) {
 		t.Fatalf("Unexpected error writing data to datastore: %s", err)
 	}
 
-	var data map[string]interface{}
-	err = ps.GetOpaque(ctx, "Baz", "Bar", &data)
+	var d map[string]interface{}
+	err = ps.GetOpaque(ctx, "Baz", "Bar", &d)
 	if err == nil {
 		t.Errorf("Expected error from GetOpaque, got nil error")
 	}
@@ -294,11 +414,11 @@ func TestOpaqueContent_Marshal(t *testing.T) {
 
 	o := &opaqueContent{}
 
-	data := map[string]interface{}{
+	d := map[string]interface{}{
 		"Foo": "Bar",
 	}
 
-	err := o.Marshal(&data)
+	err := o.Marshal(&d)
 	if err != nil {
 		t.Errorf("Unexpected error from Marshal: %s", err)
 	}
@@ -317,12 +437,12 @@ func TestOpaqueContent_Unmarshal(t *testing.T) {
 	expectedData := map[string]interface{}{
 		"Foo": "Bar",
 	}
-	var data map[string]interface{}
-	err := o.Unmarshal(&data)
+	var d map[string]interface{}
+	err := o.Unmarshal(&d)
 	if err != nil {
 		t.Errorf("Unexpected error from Unmarshal: %s", err)
 	}
-	if !reflect.DeepEqual(data, expectedData) {
+	if !reflect.DeepEqual(d, expectedData) {
 		t.Errorf("Unmarshalled data did not equal expected data")
 	}
 }
