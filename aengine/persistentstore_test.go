@@ -130,6 +130,199 @@ func TestPersistentStore_Get(t *testing.T) {
 	}
 }
 
+func TestPersistentStore_Get_NoContent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	properties, err := ps.Get(ctx, "Baz", "Bar", nil)
+	if err != nil {
+		t.Errorf("Unexpected error from Get: %s", err)
+	}
+	if !reflect.DeepEqual(properties, expectedProperties) {
+		t.Errorf("Unmarshalled properties did not equal expected properties")
+	}
+}
+
+func TestPersistentStore_Get_ContentParamWithNoContent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	var d map[string]interface{}
+	_, err = ps.Get(ctx, "Baz", "Bar", &d)
+	if err == nil {
+		t.Errorf("Expected error from Get, got nil error")
+	}
+}
+
+func TestPersistentStore_Get_ContentWithNoContentParam(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+	aeProperties = append(aeProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`{"Foo":"Bar"}`),
+		NoIndex: true,
+	})
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	_, err = ps.Get(ctx, "Baz", "Bar", nil)
+	if err == nil {
+		t.Errorf("Expected error from Get, got nil error")
+	}
+}
+
+func TestPersistentStore_Get_ContentNotBytes(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+	aeProperties = append(aeProperties, datastore.Property{
+		Name:    "Content",
+		Value:   true,
+		NoIndex: true,
+	})
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	var d map[string]interface{}
+	_, err = ps.Get(ctx, "Baz", "Bar", &d)
+	if err == nil {
+		t.Errorf("Expected error from Get, got nil error")
+	}
+}
+
+func TestPersistentStore_Get_ContentNotJSON(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+	aeProperties = append(aeProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`bluh`),
+		NoIndex: true,
+	})
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	var d map[string]interface{}
+	_, err = ps.Get(ctx, "Baz", "Bar", &d)
+	if err == nil {
+		t.Errorf("Expected error from Get, got nil error")
+	}
+}
+
+func TestPersistentStore_Get_NoEntity(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	var d map[string]interface{}
+	_, err = ps.Get(ctx, "Baz", "Bar", &d)
+	if err == nil {
+		t.Errorf("Expected error from Get, got nil error")
+	}
+}
+
 func TestPersistentStore_GetOpaque(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")

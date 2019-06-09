@@ -16,17 +16,8 @@ type PersistentStore struct {
 }
 
 func (ps *PersistentStore) GetOpaque(ctx context.Context, kind, key string, v interface{}) error {
-	l := ctxlogrus.Get(ctx)
-	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore get")
-
-	opaque := &opaqueContent{}
-	k := ps.makeKey(ctx, kind, key)
-	err := datastore.Get(ctx, k, opaque)
-	if err != nil {
-		return errors.Wrap(err, "")
-	}
-
-	return errors.Wrap(opaque.Unmarshal(v), "")
+	_, err := ps.Get(ctx, kind, key, v)
+	return err
 }
 
 func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v interface{}) error {
@@ -55,8 +46,14 @@ func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content in
 		return nil, errors.Wrap(err, "")
 	}
 
+	foundContent := false
 	for i := len(aeProperties) - 1; i >= 0; i-- {
 		if aeProperties[i].Name == "Content" {
+			foundContent = true
+			if content == nil {
+				return nil, errors.New("entity contained content to deserialize, but content param was not set")
+			}
+
 			contentBytes, ok := aeProperties[i].Value.([]byte)
 			if !ok {
 				return nil, errors.New("entity contained content property with incorrect type")
@@ -70,6 +67,9 @@ func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content in
 			aeProperties = append(aeProperties[:i], aeProperties[i+1:]...)
 			break
 		}
+	}
+	if !foundContent && content != nil {
+		return nil, errors.New("entity did not contain content to deserialize, but content param was set")
 	}
 
 	return propertiesFromAppEngine(aeProperties), nil
