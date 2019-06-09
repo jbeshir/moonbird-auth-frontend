@@ -21,18 +21,7 @@ func (ps *PersistentStore) GetOpaque(ctx context.Context, kind, key string, v in
 }
 
 func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v interface{}) error {
-	l := ctxlogrus.Get(ctx)
-	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore set")
-
-	opaque := &opaqueContent{}
-	err := opaque.Marshal(v)
-	if err != nil {
-		return errors.Wrap(err, "")
-	}
-
-	k := ps.makeKey(ctx, kind, key)
-	_, err = datastore.Put(ctx, k, opaque)
-	return errors.Wrap(err, "")
+	return ps.Set(ctx, kind, key, nil, v)
 }
 
 func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content interface{}) ([]data.Property, error) {
@@ -76,7 +65,30 @@ func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content in
 }
 
 func (ps *PersistentStore) Set(ctx context.Context, kind, key string, properties []data.Property, content interface{}) error {
-	return nil
+	l := ctxlogrus.Get(ctx)
+	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore set")
+
+	aeProperties, err := propertiesToAppEngine(properties)
+	if err != nil {
+		return err
+	}
+	if content != nil {
+		opaque := &opaqueContent{}
+		err := opaque.Marshal(content)
+		if err != nil {
+			return errors.Wrap(err, "")
+		}
+
+		aeProperties = append(aeProperties, datastore.Property{
+			Name:    "Content",
+			Value:   opaque.Content,
+			NoIndex: true,
+		})
+	}
+
+	k := ps.makeKey(ctx, kind, key)
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	return errors.Wrap(err, "")
 }
 
 func (ps *PersistentStore) Transact(ctx context.Context, f func(ctx context.Context) error) error {

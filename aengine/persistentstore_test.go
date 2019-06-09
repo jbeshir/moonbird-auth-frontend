@@ -446,6 +446,134 @@ func TestPersistentStore_GetOpaque_InvalidEntityContent(t *testing.T) {
 	}
 }
 
+func TestPersistentStore_Set(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", makeTestProperties(), &map[string]interface{}{
+		"Foo": "Bar",
+	})
+	if err != nil {
+		t.Errorf("Unexpected error from Set: %s", err)
+	}
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+
+	expectedProperties := makeTestProperties()
+	expectedAEProperties, _ := propertiesToAppEngine(expectedProperties)
+	expectedAEProperties = append(expectedAEProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`{"Foo":"Bar"}`),
+		NoIndex: true,
+	})
+
+	var aeProperties datastore.PropertyList
+	err = datastore.Get(ctx, k, &aeProperties)
+	if err != nil {
+		t.Errorf("Unexpected error reading data from datastore: %s", err)
+	}
+
+	if !reflect.DeepEqual(aeProperties, expectedAEProperties) {
+		t.Errorf("Set entity did not match expected data")
+	}
+}
+
+func TestPersistentStore_Set_NoContent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", makeTestProperties(), nil)
+	if err != nil {
+		t.Errorf("Unexpected error from Set: %s", err)
+	}
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+
+	expectedProperties := makeTestProperties()
+	expectedAEProperties, _ := propertiesToAppEngine(expectedProperties)
+
+	var aeProperties datastore.PropertyList
+	err = datastore.Get(ctx, k, &aeProperties)
+	if err != nil {
+		t.Errorf("Unexpected error reading data from datastore: %s", err)
+	}
+
+	if !reflect.DeepEqual(aeProperties, expectedAEProperties) {
+		t.Errorf("Set entity did not match expected data")
+	}
+}
+
+func TestPersistentStore_Set_InvalidProperty(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", []data.Property{
+		{
+			Name:  "Content",
+			Value: true,
+		},
+	}, nil)
+	if err == nil {
+		t.Errorf("Expected error from Set, got nil error.")
+	}
+}
+
+func TestPersistentStore_Set_InvalidContent(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", nil, &map[string]interface{}{
+		"Foo": math.NaN(),
+	})
+	if err == nil {
+		t.Errorf("Expected error from Set, got nil error.")
+	}
+}
+
 func TestPersistentStore_SetOpaque(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
@@ -478,29 +606,6 @@ func TestPersistentStore_SetOpaque(t *testing.T) {
 
 	if string(o.Content) != `{"Foo":"Bar"}` {
 		t.Errorf("Data written to datastore did not match what was expected: expected `%s`, got `%s`", `{"Foo":"Bar"}`, string(o.Content))
-	}
-}
-
-func TestPersistentStore_SetOpaque_Invalid(t *testing.T) {
-	if testing.Short() {
-		t.Skip("AppEngine dev server testing is expensive")
-	}
-
-	ctx, done, err := aetest.NewContext()
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer done()
-
-	ps := &PersistentStore{
-		Prefix: "Foo",
-	}
-
-	err = ps.SetOpaque(ctx, "Baz", "Bar", &map[string]interface{}{
-		"Foo": math.NaN(),
-	})
-	if err == nil {
-		t.Errorf("Expected error from SetOpaque, got nil error.")
 	}
 }
 
