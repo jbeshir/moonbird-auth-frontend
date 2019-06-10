@@ -1,5 +1,7 @@
 package data
 
+import "github.com/pkg/errors"
+
 type Property struct {
 	Name string
 
@@ -13,3 +15,5 @@ type Property struct {
 	// it is not sufficient to have the same underlying type.
 	Value interface{}
 }
+
+var ErrNoSuchEntity = errors.New("No Such Entity")

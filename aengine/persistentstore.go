@@ -23,6 +23,9 @@ func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content in
 	k := ps.makeKey(ctx, kind, key)
 	err := datastore.Get(ctx, k, &aeProperties)
 	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return nil, data.ErrNoSuchEntity
+		}
 		return nil, errors.Wrap(err, "")
 	}
 

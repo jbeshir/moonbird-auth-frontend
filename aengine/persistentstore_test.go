@@ -318,8 +318,8 @@ func TestPersistentStore_Get_NoEntity(t *testing.T) {
 
 	var d map[string]interface{}
 	_, err = ps.Get(ctx, "Baz", "Bar", &d)
-	if err == nil {
-		t.Errorf("Expected error from Get, got nil error")
+	if err != data.ErrNoSuchEntity {
+		t.Errorf("Expected error '%s' from Get, got '%s'", data.ErrNoSuchEntity, err)
 	}
 }
 
