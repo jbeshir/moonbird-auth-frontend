@@ -15,15 +15,6 @@ type PersistentStore struct {
 	Prefix string
 }
 
-func (ps *PersistentStore) GetOpaque(ctx context.Context, kind, key string, v interface{}) error {
-	_, err := ps.Get(ctx, kind, key, v)
-	return err
-}
-
-func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v interface{}) error {
-	return ps.Set(ctx, kind, key, nil, v)
-}
-
 func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content interface{}) ([]data.Property, error) {
 	l := ctxlogrus.Get(ctx)
 	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore get")

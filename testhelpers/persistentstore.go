@@ -2,23 +2,24 @@ package testhelpers
 
 import (
 	"context"
+	"github.com/jbeshir/moonbird-predictor-frontend/data"
 	"testing"
 )
 
 type PersistentStore struct {
-	GetOpaqueFunc func(ctx context.Context, kind, key string, v interface{}) error
-	SetOpaqueFunc func(ctx context.Context, kind, key string, v interface{}) error
-	TransactFunc  func(ctx context.Context, f func(ctx context.Context) error) error
+	GetFunc      func(ctx context.Context, kind, key string, v interface{}) ([]data.Property, error)
+	SetFunc      func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error
+	TransactFunc func(ctx context.Context, f func(ctx context.Context) error) error
 }
 
 func NewPersistentStore(t *testing.T) *PersistentStore {
 	return &PersistentStore{
-		GetOpaqueFunc: func(ctx context.Context, kind, key string, v interface{}) error {
-			t.Error("GetOpaque should not be called")
-			return nil
+		GetFunc: func(ctx context.Context, kind, key string, v interface{}) ([]data.Property, error) {
+			t.Error("Get should not be called")
+			return nil, nil
 		},
-		SetOpaqueFunc: func(ctx context.Context, kind, key string, v interface{}) error {
-			t.Error("SetOpaque should not be called")
+		SetFunc: func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+			t.Error("Set should not be called")
 			return nil
 		},
 		TransactFunc: func(ctx context.Context, f func(ctx context.Context) error) error {
@@ -28,12 +29,12 @@ func NewPersistentStore(t *testing.T) *PersistentStore {
 	}
 }
 
-func (ps *PersistentStore) GetOpaque(ctx context.Context, kind, key string, v interface{}) error {
-	return ps.GetOpaqueFunc(ctx, kind, key, v)
+func (ps *PersistentStore) Get(ctx context.Context, kind, key string, v interface{}) ([]data.Property, error) {
+	return ps.GetFunc(ctx, kind, key, v)
 }
 
-func (ps *PersistentStore) SetOpaque(ctx context.Context, kind, key string, v interface{}) error {
-	return ps.SetOpaqueFunc(ctx, kind, key, v)
+func (ps *PersistentStore) Set(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+	return ps.SetFunc(ctx, kind, key, properties, v)
 }
 
 func (ps *PersistentStore) Transact(ctx context.Context, f func(ctx context.Context) error) error {
