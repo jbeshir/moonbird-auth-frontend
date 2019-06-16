@@ -12,12 +12,26 @@ import (
 )
 
 type PersistentStore struct {
-	Prefix string
+	Prefix            string
+	PermissionChecker PermissionChecker
 }
 
 func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content interface{}) ([]data.Property, error) {
 	l := ctxlogrus.Get(ctx)
 	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore get")
+
+	if ps.PermissionChecker != nil {
+		ok, err := ps.PermissionChecker.CheckRead(ctx, kind, key)
+		if err != nil {
+			return nil, err
+		}
+
+		// If permission is denied we simulate the non-existence of the entity.
+		// This provides robustness against enumeration attacks by default.
+		if !ok {
+			return nil, data.ErrNoSuchEntity
+		}
+	}
 
 	var aeProperties datastore.PropertyList
 	k := ps.makeKey(ctx, kind, key)
@@ -61,6 +75,17 @@ func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content in
 func (ps *PersistentStore) Set(ctx context.Context, kind, key string, properties []data.Property, content interface{}) error {
 	l := ctxlogrus.Get(ctx)
 	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore set")
+
+	if ps.PermissionChecker != nil {
+		ok, err := ps.PermissionChecker.CheckWrite(ctx, kind, key)
+		if err != nil {
+			return err
+		}
+
+		if !ok {
+			return data.ErrWriteAccessDenied
+		}
+	}
 
 	aeProperties, err := propertiesToAppEngine(properties)
 	if err != nil {

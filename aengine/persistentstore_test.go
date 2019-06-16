@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"github.com/jbeshir/moonbird-predictor-frontend/data"
+	"github.com/jbeshir/moonbird-predictor-frontend/testhelpers"
 	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 	"math"
@@ -323,6 +324,112 @@ func TestPersistentStore_Get_NoEntity(t *testing.T) {
 	}
 }
 
+func TestPersistentStore_Get_Permission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	pc := testhelpers.NewPermissionChecker(t)
+	pc.CheckReadFunc = func(ctx context.Context, kind, key string) (b bool, e error) {
+		return true, nil
+	}
+	ps := &PersistentStore{
+		Prefix:            "Foo",
+		PermissionChecker: pc,
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	_, err = ps.Get(ctx, "Baz", "Bar", nil)
+	if err != nil {
+		t.Errorf("Expected nil error from Get, got '%s'", err)
+	}
+}
+
+func TestPersistentStore_Get_NoPermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	pc := testhelpers.NewPermissionChecker(t)
+	pc.CheckReadFunc = func(ctx context.Context, kind, key string) (b bool, e error) {
+		return false, nil
+	}
+	ps := &PersistentStore{
+		Prefix:            "Foo",
+		PermissionChecker: pc,
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	_, err = ps.Get(ctx, "Baz", "Bar", nil)
+	if err != data.ErrNoSuchEntity {
+		t.Errorf("Expected error '%s' from Get, got '%s'", data.ErrNoSuchEntity, err)
+	}
+}
+
+func TestPersistentStore_Get_PermissionError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	expectedError := errors.New("bluh")
+	pc := testhelpers.NewPermissionChecker(t)
+	pc.CheckReadFunc = func(ctx context.Context, kind, key string) (b bool, e error) {
+		return false, expectedError
+	}
+	ps := &PersistentStore{
+		Prefix:            "Foo",
+		PermissionChecker: pc,
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	_, err = datastore.Put(ctx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	_, err = ps.Get(ctx, "Baz", "Bar", nil)
+	if err != expectedError {
+		t.Errorf("Expected error '%s' from Get, got '%s'", expectedError, err)
+	}
+}
+
 func TestPersistentStore_Set(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
@@ -448,6 +555,85 @@ func TestPersistentStore_Set_InvalidContent(t *testing.T) {
 	})
 	if err == nil {
 		t.Errorf("Expected error from Set, got nil error.")
+	}
+}
+
+func TestPersistentStore_Set_Permission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	pc := testhelpers.NewPermissionChecker(t)
+	pc.CheckWriteFunc = func(ctx context.Context, kind, key string) (b bool, e error) {
+		return true, nil
+	}
+	ps := &PersistentStore{
+		Prefix:            "Foo",
+		PermissionChecker: pc,
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", makeTestProperties(), nil)
+	if err != nil {
+		t.Errorf("Expected nil error from Set, got '%s'", err)
+	}
+}
+
+func TestPersistentStore_Set_NoPermission(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	pc := testhelpers.NewPermissionChecker(t)
+	pc.CheckWriteFunc = func(ctx context.Context, kind, key string) (b bool, e error) {
+		return false, nil
+	}
+	ps := &PersistentStore{
+		Prefix:            "Foo",
+		PermissionChecker: pc,
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", makeTestProperties(), nil)
+	if err != data.ErrWriteAccessDenied {
+		t.Errorf("Expected error '%s' from Set, got '%s'", data.ErrWriteAccessDenied, err)
+	}
+}
+
+func TestPersistentStore_Set_PermissionError(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	expectedError := errors.New("bluh")
+	pc := testhelpers.NewPermissionChecker(t)
+	pc.CheckWriteFunc = func(ctx context.Context, kind, key string) (b bool, e error) {
+		return false, expectedError
+	}
+	ps := &PersistentStore{
+		Prefix:            "Foo",
+		PermissionChecker: pc,
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", makeTestProperties(), nil)
+	if err != expectedError {
+		t.Errorf("Expected error '%s' from Set, got '%s'", expectedError, err)
 	}
 }
 

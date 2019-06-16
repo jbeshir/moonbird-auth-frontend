@@ -16,4 +16,6 @@ type Property struct {
 	Value interface{}
 }
 
-var ErrNoSuchEntity = errors.New("No Such Entity")
+var ErrNoSuchEntity = errors.New("no such entity")
+
+var ErrWriteAccessDenied = errors.New("access denied")
