@@ -114,9 +114,6 @@ func TestTokenAuthenticator_GetToken(t *testing.T) {
 
 	expectedToken := "bluh"
 
-	formValues := make(url.Values)
-	formValues.Add("apitoken", expectedToken)
-
 	a := &TokenAuthenticator{}
 	c := context.WithValue(context.Background(), "apitoken", expectedToken)
 	token := a.GetToken(c)
