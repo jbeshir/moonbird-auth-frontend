@@ -114,7 +114,9 @@ func (ps *PersistentStore) Transact(ctx context.Context, f func(ctx context.Cont
 	l := ctxlogrus.Get(ctx)
 	l.Debug("datastore transaction start")
 
-	err := datastore.RunInTransaction(ctx, f, nil)
+	err := datastore.RunInTransaction(ctx, f, &datastore.TransactionOptions{
+		XG: true,
+	})
 
 	l.Debug("datastore transaction end")
 

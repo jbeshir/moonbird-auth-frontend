@@ -687,6 +687,65 @@ func TestPersistentStore_Transact(t *testing.T) {
 	}
 }
 
+func TestPersistentStore_Transact_XG(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix: "Foo",
+	}
+
+	callCount := 0
+	k := ps.makeKey(ctx, "Baz", "Bar")
+	k2 := ps.makeKey(ctx, "Baz", "Bar2")
+	midTransCheck := make(chan bool)
+	midTransCheckDone := make(chan bool)
+	go func() {
+		<-midTransCheck
+		o := new(opaqueContent)
+		err = datastore.Get(ctx, k, o)
+
+		wantErr := datastore.ErrNoSuchEntity
+		if err != wantErr {
+			t.Errorf("Expected err %s, got %s", wantErr, err)
+		}
+		midTransCheckDone <- true
+	}()
+
+	err = ps.Transact(ctx, func(ctx context.Context) error {
+		callCount++
+
+		o := new(opaqueContent)
+		o.Content = []byte("foo")
+		_, err = datastore.Put(ctx, k, o)
+		if err != nil {
+			return err
+		}
+
+		_, err = datastore.Put(ctx, k2, o)
+		if err != nil {
+			return err
+		}
+		midTransCheck <- true
+		<-midTransCheckDone
+		return nil
+	})
+	if err != nil {
+		t.Errorf("Expected nil error from Transact, got %s", err)
+	}
+	wantCallCount := 1
+	if callCount != wantCallCount {
+		t.Errorf("Expected call count to be %d, was %d", wantCallCount, callCount)
+	}
+}
+
 func TestPersistentStore_Transact_WithError(t *testing.T) {
 	if testing.Short() {
 		t.Skip("AppEngine dev server testing is expensive")
