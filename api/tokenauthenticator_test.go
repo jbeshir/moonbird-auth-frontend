@@ -30,6 +30,27 @@ func TestTokenAuthenticator_MakeContext(t *testing.T) {
 	}
 }
 
+func TestTokenAuthenticator_MakeContext_ParsesPostForm(t *testing.T) {
+	t.Parallel()
+
+	expectedToken := "bluh"
+
+	formValues := make(url.Values)
+	formValues.Add("apitoken", expectedToken)
+	r := &http.Request{PostForm: formValues}
+
+	a := &TokenAuthenticator{}
+	c, err := a.MakeContext(r)
+	if err != nil {
+		t.Errorf("Expected nil error, got '%s'", err)
+	}
+
+	token := c.Value("apitoken").(string)
+	if token != expectedToken {
+		t.Errorf("Expected token '%s', got '%s'", expectedToken, token)
+	}
+}
+
 func TestTokenAuthenticator_MakeContext_NoToken(t *testing.T) {
 	t.Parallel()
 

@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/jbeshir/moonbird-predictor-frontend/ctxlogrus"
 	"net/http"
 )
 
@@ -11,11 +12,6 @@ type TokenAuthenticator struct {
 }
 
 func (a *TokenAuthenticator) MakeContext(r *http.Request) (context.Context, error) {
-	if len(r.Form["apitoken"]) != 1 {
-		return nil, errors.New("expected exactly one api token for an API request")
-	}
-	token := r.Form["apitoken"][0]
-
 	var wrappedCtx context.Context
 	if a.Wrapped != nil {
 		var err error
@@ -26,6 +22,13 @@ func (a *TokenAuthenticator) MakeContext(r *http.Request) (context.Context, erro
 	} else {
 		wrappedCtx = context.Background()
 	}
+
+	_ = r.ParseForm()
+	if len(r.Form["apitoken"]) != 1 {
+		ctxlogrus.Get(wrappedCtx).Error("expected exactly one api token for an API request")
+		return nil, errors.New("expected exactly one api token for an API request")
+	}
+	token := r.Form["apitoken"][0]
 
 	c := context.WithValue(wrappedCtx, "apitoken", token)
 	return c, nil
