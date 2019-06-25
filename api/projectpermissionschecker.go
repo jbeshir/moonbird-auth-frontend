@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"github.com/jbeshir/moonbird-predictor-frontend/data"
+	"net/url"
 	"strings"
 )
 
@@ -13,12 +14,12 @@ type ProjectPermissionChecker struct {
 }
 
 func (pc *ProjectPermissionChecker) CheckRead(ctx context.Context, kind, key string) (bool, error) {
-	project := strings.Split(key, "/")[0]
+	escapedProject := strings.Split(key, "/")[0]
 
 	if pc.UserService != nil {
 		user := pc.UserService.ContextUser(ctx)
 		if user != "" {
-			_, err := pc.PersistentStore.Get(ctx, "ProjectAuth", project+"/user/"+user, nil)
+			_, err := pc.PersistentStore.Get(ctx, "ProjectAuth", escapedProject+"/user/"+url.PathEscape(user), nil)
 			if err == nil {
 				return true, nil
 			}
@@ -31,7 +32,7 @@ func (pc *ProjectPermissionChecker) CheckRead(ctx context.Context, kind, key str
 	if pc.TokenAuthenticator != nil {
 		token := pc.TokenAuthenticator.GetToken(ctx)
 		if token != "" {
-			_, err := pc.PersistentStore.Get(ctx, "ProjectAuth", project+"/token/"+token, nil)
+			_, err := pc.PersistentStore.Get(ctx, "ProjectAuth", escapedProject+"/token/"+url.PathEscape(token), nil)
 			if err == nil {
 				return true, nil
 			}
