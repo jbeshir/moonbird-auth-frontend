@@ -2,7 +2,7 @@ package api
 
 import (
 	"context"
-	"github.com/jbeshir/moonbird-predictor-frontend/data"
+	"github.com/jbeshir/moonbird-auth-frontend/data"
 	"net/url"
 	"strings"
 )

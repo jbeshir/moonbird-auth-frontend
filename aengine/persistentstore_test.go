@@ -3,8 +3,8 @@ package aengine
 import (
 	"context"
 	"errors"
-	"github.com/jbeshir/moonbird-predictor-frontend/data"
-	"github.com/jbeshir/moonbird-predictor-frontend/testhelpers"
+	"github.com/jbeshir/moonbird-auth-frontend/data"
+	"github.com/jbeshir/moonbird-auth-frontend/testhelpers"
 	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 	"math"

@@ -1,0 +1,6 @@
+runtime: go111
+service: auth-frontend
+
+handlers:
+- url: /.*
+  script: auto

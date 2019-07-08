@@ -3,8 +3,8 @@ package api
 import (
 	"context"
 	"errors"
-	"github.com/jbeshir/moonbird-predictor-frontend/data"
-	"github.com/jbeshir/moonbird-predictor-frontend/testhelpers"
+	"github.com/jbeshir/moonbird-auth-frontend/data"
+	"github.com/jbeshir/moonbird-auth-frontend/testhelpers"
 	"testing"
 )
 

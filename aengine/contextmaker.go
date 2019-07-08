@@ -2,7 +2,7 @@ package aengine
 
 import (
 	"context"
-	"github.com/jbeshir/moonbird-predictor-frontend/ctxlogrus"
+	"github.com/jbeshir/moonbird-auth-frontend/ctxlogrus"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/appengine"
