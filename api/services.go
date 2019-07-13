@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/jbeshir/moonbird-auth-frontend/data"
 	"net/http"
+	"net/url"
 )
 
 type ContextMaker interface {
@@ -16,4 +17,8 @@ type UserService interface {
 
 type PersistentStore interface {
 	Get(ctx context.Context, kind, key string, v interface{}) ([]data.Property, error)
+}
+
+type TokenBiller interface {
+	Bill(token string, url *url.URL) error
 }

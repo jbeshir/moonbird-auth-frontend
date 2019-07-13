@@ -130,6 +130,76 @@ func TestTokenAuthenticator_MakeContext_WrappedErr(t *testing.T) {
 	}
 }
 
+func TestTokenAuthenticator_MakeContext_Bill(t *testing.T) {
+	t.Parallel()
+
+	expectedToken := "bluh"
+	expectedUrl, _ := url.Parse("https://example.com/api/foo/bar")
+
+	formValues := make(url.Values)
+	formValues.Add("apitoken", expectedToken)
+	r := &http.Request{Form: formValues, URL: expectedUrl}
+
+	billCalled := false
+	b := newTestTokenBiller(t)
+	b.BillFunc = func(token string, url *url.URL) error {
+		billCalled = true
+		if token != expectedToken {
+			t.Errorf("Expected token %s, got %s", expectedToken, token)
+		}
+		if url != expectedUrl {
+			t.Errorf("Expected url %s, got %s", expectedUrl, url)
+		}
+		return nil
+	}
+
+	a := &TokenAuthenticator{
+		Biller: b,
+	}
+	c, err := a.MakeContext(r)
+	if err != nil {
+		t.Errorf("Expected nil error, got '%s'", err)
+	}
+
+	token := c.Value("apitoken").(string)
+	if token != expectedToken {
+		t.Errorf("Expected token '%s', got '%s'", expectedToken, token)
+	}
+	if !billCalled {
+		t.Error("Expected Bill to be called, was not called")
+	}
+}
+
+func TestTokenAuthenticator_MakeContext_BillErr(t *testing.T) {
+	t.Parallel()
+
+	expectedToken := "bluh"
+	expectedUrl, _ := url.Parse("https://example.com/api/foo/bar")
+
+	formValues := make(url.Values)
+	formValues.Add("apitoken", expectedToken)
+	r := &http.Request{Form: formValues, URL: expectedUrl}
+
+	b := newTestTokenBiller(t)
+	b.BillFunc = func(token string, url *url.URL) error {
+		if token != expectedToken {
+			t.Errorf("Expected token %s, got %s", expectedToken, token)
+		}
+		if url != expectedUrl {
+			t.Errorf("Expected url %s, got %s", expectedUrl, url)
+		}
+		return errors.New("out of credit")
+	}
+
+	a := &TokenAuthenticator{
+		Biller: b,
+	}
+	_, err := a.MakeContext(r)
+	if err == nil {
+		t.Errorf("Expected non-nil error, got nil error")
+	}
+}
+
 func TestTokenAuthenticator_GetToken(t *testing.T) {
 	t.Parallel()
 
@@ -153,4 +223,21 @@ func TestTokenAuthenticator_GetToken_None(t *testing.T) {
 	if token != expectedToken {
 		t.Errorf("Expected token '%s', got '%s'", expectedToken, token)
 	}
+}
+
+type testTokenBiller struct {
+	BillFunc func(token string, url *url.URL) error
+}
+
+func newTestTokenBiller(t *testing.T) *testTokenBiller {
+	return &testTokenBiller{
+		BillFunc: func(token string, url *url.URL) error {
+			t.Error("Bill should not be called")
+			return nil
+		},
+	}
+}
+
+func (b *testTokenBiller) Bill(token string, url *url.URL) error {
+	return b.BillFunc(token, url)
 }

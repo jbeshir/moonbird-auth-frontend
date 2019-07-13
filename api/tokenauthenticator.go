@@ -8,6 +8,7 @@ import (
 )
 
 type TokenAuthenticator struct {
+	Biller  TokenBiller
 	Wrapped ContextMaker
 }
 
@@ -29,6 +30,13 @@ func (a *TokenAuthenticator) MakeContext(r *http.Request) (context.Context, erro
 		return nil, errors.New("expected exactly one api token for an API request")
 	}
 	token := r.Form["apitoken"][0]
+
+	if a.Biller != nil {
+		err := a.Biller.Bill(token, r.URL)
+		if err != nil {
+			return nil, err
+		}
+	}
 
 	c := context.WithValue(wrappedCtx, "apitoken", token)
 	return c, nil
