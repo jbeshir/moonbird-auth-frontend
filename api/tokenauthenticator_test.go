@@ -142,8 +142,11 @@ func TestTokenAuthenticator_MakeContext_Bill(t *testing.T) {
 
 	billCalled := false
 	b := newTestTokenBiller(t)
-	b.BillFunc = func(token string, url *url.URL) error {
+	b.BillFunc = func(ctx context.Context, token string, url *url.URL) error {
 		billCalled = true
+		if ctx.Value("apitoken").(string) != expectedToken {
+			t.Errorf("Expected context to contain token '%s'", expectedToken)
+		}
 		if token != expectedToken {
 			t.Errorf("Expected token %s, got %s", expectedToken, token)
 		}
@@ -181,7 +184,7 @@ func TestTokenAuthenticator_MakeContext_BillErr(t *testing.T) {
 	r := &http.Request{Form: formValues, URL: expectedUrl}
 
 	b := newTestTokenBiller(t)
-	b.BillFunc = func(token string, url *url.URL) error {
+	b.BillFunc = func(ctx context.Context, token string, url *url.URL) error {
 		if token != expectedToken {
 			t.Errorf("Expected token %s, got %s", expectedToken, token)
 		}
@@ -226,18 +229,18 @@ func TestTokenAuthenticator_GetToken_None(t *testing.T) {
 }
 
 type testTokenBiller struct {
-	BillFunc func(token string, url *url.URL) error
+	BillFunc func(ctx context.Context, token string, url *url.URL) error
 }
 
 func newTestTokenBiller(t *testing.T) *testTokenBiller {
 	return &testTokenBiller{
-		BillFunc: func(token string, url *url.URL) error {
+		BillFunc: func(ctx context.Context, token string, url *url.URL) error {
 			t.Error("Bill should not be called")
 			return nil
 		},
 	}
 }
 
-func (b *testTokenBiller) Bill(token string, url *url.URL) error {
-	return b.BillFunc(token, url)
+func (b *testTokenBiller) Bill(ctx context.Context, token string, url *url.URL) error {
+	return b.BillFunc(ctx, token, url)
 }

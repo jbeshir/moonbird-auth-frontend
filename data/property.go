@@ -19,3 +19,5 @@ type Property struct {
 var ErrNoSuchEntity = errors.New("no such entity")
 
 var ErrWriteAccessDenied = errors.New("access denied")
+
+var ErrOutOfCredit = errors.New("no credit available")

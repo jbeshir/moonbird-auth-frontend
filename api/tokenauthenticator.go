@@ -31,14 +31,15 @@ func (a *TokenAuthenticator) MakeContext(r *http.Request) (context.Context, erro
 	}
 	token := r.Form["apitoken"][0]
 
+	c := context.WithValue(wrappedCtx, "apitoken", token)
+
 	if a.Biller != nil {
-		err := a.Biller.Bill(token, r.URL)
+		err := a.Biller.Bill(c, token, r.URL)
 		if err != nil {
 			return nil, err
 		}
 	}
 
-	c := context.WithValue(wrappedCtx, "apitoken", token)
 	return c, nil
 }
 
