@@ -4,5 +4,7 @@ service: auth-frontend
 handlers:
   - url: /admin/.*
     script: auto
-- url: /.*
-  script: auto
+    login: admin
+
+  - url: /.*
+    script: auto
