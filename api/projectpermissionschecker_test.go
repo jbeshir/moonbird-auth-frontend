@@ -9,6 +9,8 @@ import (
 )
 
 func TestProjectPermissionsChecker_CheckRead_NoAuth(t *testing.T) {
+	t.Parallel()
+
 	pc := &ProjectPermissionChecker{}
 	ok, err := pc.CheckRead(context.Background(), "foo", "bar")
 
@@ -23,6 +25,7 @@ func TestProjectPermissionsChecker_CheckRead_NoAuth(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_User_None(t *testing.T) {
+	t.Parallel()
 
 	expectedContext := context.Background()
 
@@ -69,6 +72,7 @@ func TestProjectPermissionsChecker_CheckRead_User_None(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_User_Ok(t *testing.T) {
+	t.Parallel()
 
 	expectedContext := context.Background()
 
@@ -133,6 +137,7 @@ func TestProjectPermissionsChecker_CheckRead_User_Ok(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_User_Escaped(t *testing.T) {
+	t.Parallel()
 
 	expectedContext := context.Background()
 
@@ -197,6 +202,7 @@ func TestProjectPermissionsChecker_CheckRead_User_Escaped(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_User_NotOk(t *testing.T) {
+	t.Parallel()
 
 	expectedContext := context.Background()
 
@@ -261,6 +267,7 @@ func TestProjectPermissionsChecker_CheckRead_User_NotOk(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_User_Err(t *testing.T) {
+	t.Parallel()
 
 	expectedError := errors.New("bluh")
 	expectedContext := context.Background()
@@ -326,6 +333,7 @@ func TestProjectPermissionsChecker_CheckRead_User_Err(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_Token_Ok(t *testing.T) {
+	t.Parallel()
 
 	expectedToken := "bluh"
 	expectedContext := context.WithValue(context.Background(), "apitoken", expectedToken)
@@ -378,6 +386,7 @@ func TestProjectPermissionsChecker_CheckRead_Token_Ok(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_Token_Escaped(t *testing.T) {
+	t.Parallel()
 
 	expectedToken := "/trickytoken/"
 	expectedContext := context.WithValue(context.Background(), "apitoken", expectedToken)
@@ -430,6 +439,8 @@ func TestProjectPermissionsChecker_CheckRead_Token_Escaped(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_Token_None(t *testing.T) {
+	t.Parallel()
+
 	expectedContext := context.Background()
 
 	getCalled := false
@@ -462,6 +473,7 @@ func TestProjectPermissionsChecker_CheckRead_Token_None(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_Token_NotOk(t *testing.T) {
+	t.Parallel()
 
 	expectedToken := "bluh"
 	expectedContext := context.WithValue(context.Background(), "apitoken", expectedToken)
@@ -514,6 +526,7 @@ func TestProjectPermissionsChecker_CheckRead_Token_NotOk(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckRead_Token_Err(t *testing.T) {
+	t.Parallel()
 
 	expectedError := errors.New("blah")
 	expectedToken := "bluh"
@@ -567,6 +580,8 @@ func TestProjectPermissionsChecker_CheckRead_Token_Err(t *testing.T) {
 }
 
 func TestProjectPermissionsChecker_CheckWrite_NoAuth(t *testing.T) {
+	t.Parallel()
+
 	pc := &ProjectPermissionChecker{}
 	ok, err := pc.CheckWrite(context.Background(), "foo", "bar")
 

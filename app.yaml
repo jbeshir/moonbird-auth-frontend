@@ -2,5 +2,7 @@ runtime: go111
 service: auth-frontend
 
 handlers:
+  - url: /admin/.*
+    script: auto
 - url: /.*
   script: auto

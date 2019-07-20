@@ -11,6 +11,8 @@ import (
 )
 
 func TestEndpointBiller_Bill_NoMatch(t *testing.T) {
+	t.Parallel()
+
 	b := &EndpointBiller{
 		UrlEndpoints: map[string]string{},
 	}
@@ -28,6 +30,8 @@ func TestEndpointBiller_Bill_NoMatch(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_LimitGetErr(t *testing.T) {
+	t.Parallel()
+
 	getCalled := false
 	ps := testhelpers.NewPersistentStore(t)
 
@@ -69,6 +73,8 @@ func TestEndpointBiller_Bill_LimitGetErr(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_NoLimitEntity(t *testing.T) {
+	t.Parallel()
+
 	getCalled := false
 	ps := testhelpers.NewPersistentStore(t)
 	ps.GetFunc = func(ctx context.Context, kind, key string, v interface{}) (properties []data.Property, e error) {
@@ -109,6 +115,8 @@ func TestEndpointBiller_Bill_NoLimitEntity(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_ZeroLimit(t *testing.T) {
+	t.Parallel()
+
 	getCalled := false
 	ps := testhelpers.NewPersistentStore(t)
 	ps.GetFunc = func(ctx context.Context, kind, key string, v interface{}) (properties []data.Property, e error) {
@@ -154,6 +162,8 @@ func TestEndpointBiller_Bill_ZeroLimit(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_EstUsageCheckErr(t *testing.T) {
+	t.Parallel()
+
 	getCallCount := 0
 	expectedErr := errors.New("bluh")
 	ps := testhelpers.NewPersistentStore(t)
@@ -190,7 +200,7 @@ func TestEndpointBiller_Bill_EstUsageCheckErr(t *testing.T) {
 
 			return nil, expectedErr
 		}
-		t.Error("Unexpected third call to Get")
+		t.Error("Unexpected call to Get")
 		return nil, nil
 	}
 
@@ -215,6 +225,8 @@ func TestEndpointBiller_Bill_EstUsageCheckErr(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_LimitReached(t *testing.T) {
+	t.Parallel()
+
 	getCallCount := 0
 	ps := testhelpers.NewPersistentStore(t)
 	ps.GetFunc = func(ctx context.Context, kind, key string, v interface{}) (properties []data.Property, e error) {
@@ -257,7 +269,7 @@ func TestEndpointBiller_Bill_LimitReached(t *testing.T) {
 
 			return nil, nil
 		}
-		t.Error("Unexpected third call to Get")
+		t.Error("Unexpected call to Get")
 		return nil, nil
 	}
 
@@ -283,6 +295,8 @@ func TestEndpointBiller_Bill_LimitReached(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_IncrementTransactErr(t *testing.T) {
+	t.Parallel()
+
 	ps := testhelpers.NewPersistentStore(t)
 
 	expectedErr := errors.New("bluh")
@@ -347,7 +361,7 @@ func TestEndpointBiller_Bill_IncrementTransactErr(t *testing.T) {
 		case 3:
 			return nil, nil
 		}
-		t.Error("Unexpected third call to Get")
+		t.Error("Unexpected call to Get")
 		return nil, nil
 	}
 
@@ -381,6 +395,8 @@ func TestEndpointBiller_Bill_IncrementTransactErr(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_IncrementGetErr(t *testing.T) {
+	t.Parallel()
+
 	ps := testhelpers.NewPersistentStore(t)
 
 	expectedErr := errors.New("bluh")
@@ -463,7 +479,7 @@ func TestEndpointBiller_Bill_IncrementGetErr(t *testing.T) {
 			}
 			return nil, expectedErr
 		}
-		t.Error("Unexpected third call to Get")
+		t.Error("Unexpected call to Get")
 		return nil, nil
 	}
 
@@ -497,6 +513,8 @@ func TestEndpointBiller_Bill_IncrementGetErr(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill_IncrementSetErr(t *testing.T) {
+	t.Parallel()
+
 	ps := testhelpers.NewPersistentStore(t)
 
 	expectedErr := errors.New("bluh")
@@ -587,7 +605,7 @@ func TestEndpointBiller_Bill_IncrementSetErr(t *testing.T) {
 
 			return nil, nil
 		}
-		t.Error("Unexpected third call to Get")
+		t.Error("Unexpected call to Get")
 		return nil, nil
 	}
 
@@ -621,6 +639,8 @@ func TestEndpointBiller_Bill_IncrementSetErr(t *testing.T) {
 }
 
 func TestEndpointBiller_Bill(t *testing.T) {
+	t.Parallel()
+
 	ps := testhelpers.NewPersistentStore(t)
 
 	transactionCallCount := 0
@@ -710,7 +730,7 @@ func TestEndpointBiller_Bill(t *testing.T) {
 
 			return nil, nil
 		}
-		t.Error("Unexpected third call to Get")
+		t.Error("Unexpected call to Get")
 		return nil, nil
 	}
 
@@ -734,6 +754,109 @@ func TestEndpointBiller_Bill(t *testing.T) {
 		}
 
 		expectedCount := int64(86402)
+		if usage.Count != expectedCount {
+			t.Errorf("Expected new usage count to be %d, was %d", expectedCount, usage.Count)
+		}
+
+		return nil
+	}
+
+	u, err := url.Parse("https://example.com/api/foo")
+	if err != nil {
+		t.Fatal("Failed to parse URL")
+	}
+
+	b := &EndpointBiller{
+		PersistentStore: ps,
+		UrlEndpoints: map[string]string{
+			"/api/foo": "bar",
+		},
+	}
+	err = b.Bill(context.Background(), "bluh", u)
+	if getCallCount != 3 {
+		t.Errorf("Expected bill to call Get %d times, called %d times", 3, getCallCount)
+	}
+	if setCallCount != 1 {
+		t.Errorf("Expected bill to call Set %d times, called %d times", 1, setCallCount)
+	}
+	if err != nil {
+		t.Errorf("Expected bill to return nil error, got '%s'", err)
+	}
+}
+
+func TestEndpointBiller_Bill_FirstUsage(t *testing.T) {
+	t.Parallel()
+
+	ps := testhelpers.NewPersistentStore(t)
+
+	transactionCallCount := 0
+	inTransaction := false
+	ps.TransactFunc = func(ctx context.Context, f func(ctx context.Context) error) error {
+		if transactionCallCount != 0 {
+			t.Error("Expected Transact to only be called once")
+		}
+		transactionCallCount++
+
+		inTransaction = true
+		err := f(ctx)
+		inTransaction = false
+		return err
+	}
+
+	getCallCount := 0
+	ps.GetFunc = func(ctx context.Context, kind, key string, v interface{}) (properties []data.Property, e error) {
+		getCallCount++
+		switch getCallCount {
+		case 1:
+			if inTransaction {
+				t.Errorf("Expected get call %d to be outside transaction", getCallCount)
+			}
+
+			expectedKind := "TokenLimit"
+			if kind != expectedKind {
+				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
+			}
+
+			expectedKey := "bluh/bar"
+			if key != expectedKey {
+				t.Errorf("Expected key '%s', got '%s'", expectedKind, kind)
+			}
+
+			return []data.Property{
+				{
+					Name:  "Limit",
+					Value: int64(86400),
+				},
+			}, nil
+		case 2:
+			fallthrough
+		case 3:
+			return nil, data.ErrNoSuchEntity
+		}
+		t.Error("Unexpected call to Get")
+		return nil, nil
+	}
+
+	setCallCount := 0
+	ps.SetFunc = func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+		setCallCount++
+
+		expectedKind := "TokenUsage"
+		if kind != expectedKind {
+			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
+		}
+
+		expectedKey := "bluh/bar/1"
+		if key != expectedKey {
+			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
+		}
+
+		usage, ok := v.(*tokenUsage)
+		if !ok {
+			t.Error("Expected token usage struct to save")
+		}
+
+		expectedCount := int64(1)
 		if usage.Count != expectedCount {
 			t.Errorf("Expected new usage count to be %d, was %d", expectedCount, usage.Count)
 		}
