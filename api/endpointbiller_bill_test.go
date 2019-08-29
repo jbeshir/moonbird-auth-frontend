@@ -8,6 +8,7 @@ import (
 	"net/url"
 	"strings"
 	"testing"
+	"time"
 )
 
 func TestEndpointBiller_Bill_NoMatch(t *testing.T) {
@@ -193,7 +194,7 @@ func TestEndpointBiller_Bill_EstUsageCheckErr(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -213,6 +214,9 @@ func TestEndpointBiller_Bill_EstUsageCheckErr(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)
@@ -255,7 +259,7 @@ func TestEndpointBiller_Bill_LimitReached(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -282,6 +286,9 @@ func TestEndpointBiller_Bill_LimitReached(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)
@@ -344,7 +351,7 @@ func TestEndpointBiller_Bill_IncrementTransactErr(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -380,6 +387,9 @@ func TestEndpointBiller_Bill_IncrementTransactErr(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)
@@ -449,7 +459,7 @@ func TestEndpointBiller_Bill_IncrementGetErr(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -473,7 +483,7 @@ func TestEndpointBiller_Bill_IncrementGetErr(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -498,6 +508,9 @@ func TestEndpointBiller_Bill_IncrementGetErr(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)
@@ -567,7 +580,7 @@ func TestEndpointBiller_Bill_IncrementSetErr(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -591,7 +604,7 @@ func TestEndpointBiller_Bill_IncrementSetErr(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -624,6 +637,9 @@ func TestEndpointBiller_Bill_IncrementSetErr(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)
@@ -692,7 +708,7 @@ func TestEndpointBiller_Bill(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -716,7 +732,7 @@ func TestEndpointBiller_Bill(t *testing.T) {
 				t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 			}
 
-			expectedKey := "bluh/bar/1"
+			expectedKey := "bluh/bar/2019-06/1"
 			if key != expectedKey {
 				t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 			}
@@ -743,7 +759,7 @@ func TestEndpointBiller_Bill(t *testing.T) {
 			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 		}
 
-		expectedKey := "bluh/bar/1"
+		expectedKey := "bluh/bar/2019-06/1"
 		if key != expectedKey {
 			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 		}
@@ -770,6 +786,9 @@ func TestEndpointBiller_Bill(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)
@@ -846,7 +865,7 @@ func TestEndpointBiller_Bill_FirstUsage(t *testing.T) {
 			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
 		}
 
-		expectedKey := "bluh/bar/1"
+		expectedKey := "bluh/bar/2019-06/1"
 		if key != expectedKey {
 			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
 		}
@@ -873,6 +892,9 @@ func TestEndpointBiller_Bill_FirstUsage(t *testing.T) {
 		PersistentStore: ps,
 		UrlEndpoints: map[string]string{
 			"/api/foo": "bar",
+		},
+		NowFunc: func() time.Time {
+			return time.Date(2019, 06, 11, 23, 45, 12, 0, time.UTC)
 		},
 	}
 	err = b.Bill(context.Background(), "bluh", u)

@@ -6,39 +6,34 @@ import (
 	"github.com/jbeshir/moonbird-auth-frontend/testhelpers"
 	"net/http"
 	"net/url"
-	"strconv"
 	"testing"
 )
 
-func TestAdminApiSetLimit_HandleFunc_Success(t *testing.T) {
+func TestAdminApiCreateToken_HandleFunc_Success(t *testing.T) {
 	t.Parallel()
 
 	var createdContext context.Context
 
-	expectedToken := "bluh"
-	expectedEndpoint := "bar"
-	expectedLimit := int64(86400)
+	expectedProject := "bar"
 
-	calledSetLimit := false
-	b := newTestLimitedEndpointBiller(t)
-	b.SetLimitFunc = func(ctx context.Context, token, endpoint string, limit int64) error {
-		calledSetLimit = true
+	expectedToken := "foo"
+	calledCreateToken := false
+	ptl := newTestProjectTokenLister(t)
+	ptl.CreateTokenFunc = func(ctx context.Context, project string) (s string, e error) {
+		calledCreateToken = true
 
-		if token != expectedToken {
-			t.Errorf("Expected token '%s', got token '%s'", expectedToken, token)
+		if project != expectedProject {
+			t.Errorf("Expected project '%s', got project '%s'", expectedProject, project)
 		}
-		if endpoint != expectedEndpoint {
-			t.Errorf("Expected endpoint '%s', got endpoint '%s'", expectedEndpoint, endpoint)
-		}
-		if limit != expectedLimit {
-			t.Errorf("Expected limit %d, got limit %d", expectedLimit, limit)
-		}
-		return nil
+		return expectedToken, nil
 	}
 
 	calledOnSuccess := false
 	r := testhelpers.NewWebApiResponder(t)
 	r.OnSuccessFunc = func(w http.ResponseWriter, v interface{}) {
+		if v != expectedToken {
+			t.Errorf("Expected token '%s', got token '%s'", expectedToken, v)
+		}
 		calledOnSuccess = true
 	}
 
@@ -48,33 +43,31 @@ func TestAdminApiSetLimit_HandleFunc_Success(t *testing.T) {
 		return createdContext, nil
 	}
 
-	c := &AdminApiSetLimit{
-		Biller: b,
+	c := &AdminApiCreateToken{
+		ProjectTokenLister: ptl,
 	}
 	handler := c.HandleFunc(cm, r)
 	handler(nil, &http.Request{
 		Form: url.Values{
-			"token":    []string{expectedToken},
-			"endpoint": []string{expectedEndpoint},
-			"limit":    []string{strconv.FormatInt(expectedLimit, 10)},
+			"project": []string{expectedProject},
 		},
 	})
 
-	if !calledSetLimit {
-		t.Error("Expected SetLimit to be called, was not called")
+	if !calledCreateToken {
+		t.Error("Expected CreateToken to be called, was not called")
 	}
 	if !calledOnSuccess {
 		t.Error("Expected responder's OnSuccess method to be called, was not called")
 	}
 }
 
-func TestAdminApiSetLimit_HandleFunc_SetLimitErr(t *testing.T) {
+func TestAdminApiCreateToken_HandleFunc_CreateTokenErr(t *testing.T) {
 	t.Parallel()
 
 	expectedErr := errors.New("bluh")
-	b := newTestLimitedEndpointBiller(t)
-	b.SetLimitFunc = func(ctx context.Context, token, endpoint string, limit int64) error {
-		return expectedErr
+	ptl := newTestProjectTokenLister(t)
+	ptl.CreateTokenFunc = func(ctx context.Context, project string) (s string, e error) {
+		return "", expectedErr
 	}
 
 	calledOnError := false
@@ -88,15 +81,13 @@ func TestAdminApiSetLimit_HandleFunc_SetLimitErr(t *testing.T) {
 		return context.Background(), nil
 	}
 
-	c := &AdminApiSetLimit{
-		Biller: b,
+	c := &AdminApiCreateToken{
+		ProjectTokenLister: ptl,
 	}
 	handler := c.HandleFunc(cm, r)
 	handler(nil, &http.Request{
 		Form: url.Values{
-			"token":    []string{"bluh"},
-			"endpoint": []string{"bar"},
-			"limit":    []string{strconv.FormatInt(1, 10)},
+			"project": []string{"bar"},
 		},
 	})
 

@@ -11,14 +11,22 @@ import (
 
 func main() {
 	authContext := &aengine.ContextMaker{
-		Namespace:"moonbird-auth",
+		Namespace: "moonbird-auth",
 	}
+
 	admApiSetLimit := &controllers.AdminApiSetLimit{
 		Biller: &api.EndpointBiller{
 			PersistentStore: &aengine.PersistentStore{},
 		},
 	}
 	http.HandleFunc("/admin/api/set-limit", admApiSetLimit.HandleFunc(authContext, &responders.WebApi{}))
+
+	admApiCreateToken := &controllers.AdminApiCreateToken{
+		ProjectTokenLister: &api.ProjectPermissionChecker{
+			PersistentStore: &aengine.PersistentStore{},
+		},
+	}
+	http.HandleFunc("/admin/api/create-token", admApiCreateToken.HandleFunc(authContext, &responders.WebApi{}))
 
 	appengine.Main()
 }

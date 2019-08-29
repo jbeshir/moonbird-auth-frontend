@@ -4,11 +4,13 @@ import (
 	"context"
 	"github.com/jbeshir/moonbird-auth-frontend/data"
 	"net/url"
+	"time"
 )
 
 type EndpointBiller struct {
 	PersistentStore PersistentStore
 	UrlEndpoints    map[string]string
+	NowFunc         func() time.Time
 }
 
 type tokenUsage struct {
@@ -63,8 +65,11 @@ func (b *EndpointBiller) SetLimit(ctx context.Context, token, endpoint string, l
 
 // Permitted to be moderately out of date for performance.
 func (b *EndpointBiller) estimateUsage(ctx context.Context, token string, endpoint string) (int64, error) {
+	now := b.NowFunc()
+	nowStr := now.Format("2006-01")
+	key := tokenEndpointKey(token, endpoint) + "/" + nowStr + "/1"
+
 	var usage tokenUsage
-	key := tokenEndpointKey(token, endpoint) + "/1"
 	_, err := b.PersistentStore.Get(ctx, "TokenUsage", key, &usage)
 	if err != nil {
 		if err == data.ErrNoSuchEntity {
@@ -77,8 +82,11 @@ func (b *EndpointBiller) estimateUsage(ctx context.Context, token string, endpoi
 
 func (b *EndpointBiller) incrementUsage(ctx context.Context, token string, endpoint string) error {
 	return b.PersistentStore.Transact(ctx, func(ctx context.Context) error {
+		now := b.NowFunc()
+		nowStr := now.Format("2006-01")
+		key := tokenEndpointKey(token, endpoint) + "/" + nowStr + "/1"
+
 		var usage tokenUsage
-		key := tokenEndpointKey(token, endpoint) + "/1"
 		_, err := b.PersistentStore.Get(ctx, "TokenUsage", key, &usage)
 		if err != nil {
 			if err == data.ErrNoSuchEntity {

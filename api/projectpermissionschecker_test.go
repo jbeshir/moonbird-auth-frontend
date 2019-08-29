@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/jbeshir/moonbird-auth-frontend/data"
 	"github.com/jbeshir/moonbird-auth-frontend/testhelpers"
+	"strings"
 	"testing"
 )
 
@@ -592,5 +593,117 @@ func TestProjectPermissionsChecker_CheckWrite_NoAuth(t *testing.T) {
 
 	if err != nil {
 		t.Errorf("Unexpected non-nil err from check: %v", err)
+	}
+}
+
+func TestProjectPermissionsChecker_CreateToken_Ok(t *testing.T) {
+	t.Parallel()
+
+	setToken := ""
+	expectedContext := context.Background()
+
+	setCalled := false
+	ps := testhelpers.NewPersistentStore(t)
+	ps.SetFunc = func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+		if ctx != expectedContext {
+			t.Error("Context was not expected context")
+		}
+
+		expectedKind := "ProjectAuth"
+		if kind != expectedKind {
+			t.Errorf("Expected store set kind %v, was %v", expectedKind, kind)
+		}
+
+		expectedKeyPrefix := "bar/token/"
+		if !strings.HasPrefix(key, expectedKeyPrefix) {
+			t.Errorf("Expected store set key prefix %v, key was %v", expectedKeyPrefix, key)
+		}
+
+		setToken = key[len(expectedKeyPrefix):]
+		if len(setToken) != 44 {
+			t.Errorf("Expected store set key token to be random 40 hex chars, token was %v", setToken)
+		}
+
+		setCalled = true
+		return nil
+	}
+
+	pc := &ProjectPermissionChecker{
+		PersistentStore: ps,
+	}
+	token, err := pc.CreateToken(expectedContext, "bar")
+
+	if token != setToken {
+		t.Errorf("CreateToken did not return the same token '%s' it placed into the datastore, returned '%s'", setToken, token)
+	}
+
+	if err != nil {
+		t.Errorf("Unexpected non-nil err from check: %v", err)
+	}
+
+	if !setCalled {
+		t.Error("Expected set function to be called, was not called")
+	}
+}
+
+func TestProjectPermissionsChecker_CreateToken_Escaped(t *testing.T) {
+	t.Parallel()
+
+	expectedContext := context.Background()
+
+	setCalled := false
+	ps := testhelpers.NewPersistentStore(t)
+	ps.SetFunc = func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+		if ctx != expectedContext {
+			t.Error("Context was not expected context")
+		}
+
+		expectedKeyPrefix := "a%2Fb/token/"
+		if !strings.HasPrefix(key, expectedKeyPrefix) {
+			t.Errorf("Expected store set key prefix %v, key was %v", expectedKeyPrefix, key)
+		}
+
+		setCalled = true
+		return nil
+	}
+
+	pc := &ProjectPermissionChecker{
+		PersistentStore: ps,
+	}
+	_, err := pc.CreateToken(expectedContext, "a/b")
+
+	if err != nil {
+		t.Errorf("Unexpected non-nil err from check: %v", err)
+	}
+
+	if !setCalled {
+		t.Error("Expected set function to be called, was not called")
+	}
+}
+
+func TestProjectPermissionsChecker_CreateToken_Err(t *testing.T) {
+	t.Parallel()
+
+	expectedError := errors.New("blah")
+	expectedContext := context.Background()
+
+	setCalled := false
+	ps := testhelpers.NewPersistentStore(t)
+	ps.SetFunc = func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+		setCalled = true
+		return expectedError
+	}
+
+	pc := &ProjectPermissionChecker{
+		PersistentStore: ps,
+	}
+	_, err := pc.CreateToken(expectedContext, "bar")
+
+	if err != expectedError {
+		t.Errorf("Expected err from CreateToken '%v' got '%v'", expectedError, err)
+	}
+
+	if !setCalled {
+		t.Error("Expected set function to be called, was not called")
 	}
 }
