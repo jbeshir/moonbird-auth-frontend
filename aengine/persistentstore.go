@@ -8,15 +8,25 @@ import (
 	"github.com/jbeshir/moonbird-auth-frontend/data"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
 )
 
 type PersistentStore struct {
 	Prefix            string
 	PermissionChecker PermissionChecker
+	Namespace         string
 }
 
 func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content interface{}) ([]data.Property, error) {
+	if ps.Namespace != "" {
+		var err error
+		ctx, err = appengine.Namespace(ctx, ps.Namespace)
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	l := ctxlogrus.Get(ctx)
 	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore get")
 
@@ -73,6 +83,14 @@ func (ps *PersistentStore) Get(ctx context.Context, kind, key string, content in
 }
 
 func (ps *PersistentStore) Set(ctx context.Context, kind, key string, properties []data.Property, content interface{}) error {
+	if ps.Namespace != "" {
+		var err error
+		ctx, err = appengine.Namespace(ctx, ps.Namespace)
+		if err != nil {
+			return err
+		}
+	}
+
 	l := ctxlogrus.Get(ctx)
 	l.WithFields(logrus.Fields{"prefix": ps.Prefix, "kind": kind, "key": key}).Debug("datastore set")
 

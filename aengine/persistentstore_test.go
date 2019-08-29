@@ -5,6 +5,7 @@ import (
 	"errors"
 	"github.com/jbeshir/moonbird-auth-frontend/data"
 	"github.com/jbeshir/moonbird-auth-frontend/testhelpers"
+	"google.golang.org/appengine"
 	"google.golang.org/appengine/aetest"
 	"google.golang.org/appengine/datastore"
 	"math"
@@ -128,6 +129,97 @@ func TestPersistentStore_Get(t *testing.T) {
 	}
 	if !reflect.DeepEqual(d, expectedData) {
 		t.Errorf("Unmarshalled d did not equal expected d")
+	}
+}
+
+func TestPersistentStore_GetNamespace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix:    "Foo",
+		Namespace: "Blah",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+	aeProperties = append(aeProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`{"Foo":"Bar"}`),
+		NoIndex: true,
+	})
+
+	putCtx, err := appengine.Namespace(ctx, "Blah")
+	if err != nil {
+		t.Fatal(err)
+	}
+	k := ps.makeKey(putCtx, "Baz", "Bar")
+	_, err = datastore.Put(putCtx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	expectedData := map[string]interface{}{
+		"Foo": "Bar",
+	}
+	var d map[string]interface{}
+	properties, err := ps.Get(ctx, "Baz", "Bar", &d)
+	if err != nil {
+		t.Errorf("Unexpected error from Get: %s", err)
+	}
+	if !reflect.DeepEqual(properties, expectedProperties) {
+		t.Errorf("Unmarshalled properties did not equal expected properties")
+	}
+	if !reflect.DeepEqual(d, expectedData) {
+		t.Errorf("Unmarshalled d did not equal expected d")
+	}
+}
+
+func TestPersistentStore_GetNamespaceBadContext(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix:    "Foo",
+		Namespace: "Blah",
+	}
+
+	expectedProperties := makeTestProperties()
+	aeProperties, _ := propertiesToAppEngine(expectedProperties)
+	aeProperties = append(aeProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`{"Foo":"Bar"}`),
+		NoIndex: true,
+	})
+
+	putCtx, err := appengine.Namespace(ctx, "Blah")
+	if err != nil {
+		t.Fatal(err)
+	}
+	k := ps.makeKey(putCtx, "Baz", "Bar")
+	_, err = datastore.Put(putCtx, k, &aeProperties)
+	if err != nil {
+		t.Fatalf("Unexpected error writing data to datastore: %s", err)
+	}
+
+	var d map[string]interface{}
+	_, err = ps.Get(context.Background(), "Baz", "Bar", &d)
+	if err == nil {
+		t.Errorf("Expected error from Get, got nil")
 	}
 }
 
@@ -471,6 +563,72 @@ func TestPersistentStore_Set(t *testing.T) {
 	if !reflect.DeepEqual(aeProperties, expectedAEProperties) {
 		t.Errorf("Set entity did not match expected data")
 	}
+}
+
+func TestPersistentStore_SetNamespace(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ctx, done, err := aetest.NewContext()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer done()
+
+	ps := &PersistentStore{
+		Prefix:    "Foo",
+		Namespace: "Blah",
+	}
+
+	err = ps.Set(ctx, "Baz", "Bar", makeTestProperties(), &map[string]interface{}{
+		"Foo": "Bar",
+	})
+	if err != nil {
+		t.Errorf("Unexpected error from Set: %s", err)
+	}
+
+	expectedProperties := makeTestProperties()
+	expectedAEProperties, _ := propertiesToAppEngine(expectedProperties)
+	expectedAEProperties = append(expectedAEProperties, datastore.Property{
+		Name:    "Content",
+		Value:   []byte(`{"Foo":"Bar"}`),
+		NoIndex: true,
+	})
+
+	getCtx, _ := appengine.Namespace(ctx, "Blah")
+	k := ps.makeKey(getCtx, "Baz", "Bar")
+	var aeProperties datastore.PropertyList
+	err = datastore.Get(getCtx, k, &aeProperties)
+	if err != nil {
+		t.Errorf("Unexpected error reading data from datastore: %s", err)
+	}
+
+	if !reflect.DeepEqual(aeProperties, expectedAEProperties) {
+		t.Errorf("Set entity did not match expected data")
+	}
+}
+
+func TestPersistentStore_SetNamespaceBadContext(t *testing.T) {
+	if testing.Short() {
+		t.Skip("AppEngine dev server testing is expensive")
+	}
+
+	ps := &PersistentStore{
+		Prefix:    "Foo",
+		Namespace: "Blah",
+	}
+
+	var err error
+	defer func() {
+		panicked := recover()
+		if panicked == nil && err == nil {
+			t.Errorf("Expected error or panic from Set, got neither")
+		}
+	}()
+	err = ps.Set(context.Background(), "Baz", "Bar", makeTestProperties(), &map[string]interface{}{
+		"Foo": "Bar",
+	})
 }
 
 func TestPersistentStore_Set_NoContent(t *testing.T) {
