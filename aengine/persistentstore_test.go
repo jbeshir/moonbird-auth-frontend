@@ -216,11 +216,14 @@ func TestPersistentStore_GetNamespaceBadContext(t *testing.T) {
 		t.Fatalf("Unexpected error writing data to datastore: %s", err)
 	}
 
+	defer func() {
+		panicked := recover()
+		if panicked == nil && err == nil {
+			t.Errorf("Expected error or panic from Set, got neither")
+		}
+	}()
 	var d map[string]interface{}
 	_, err = ps.Get(context.Background(), "Baz", "Bar", &d)
-	if err == nil {
-		t.Errorf("Expected error from Get, got nil")
-	}
 }
 
 func TestPersistentStore_Get_NoContent(t *testing.T) {
