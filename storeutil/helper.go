@@ -38,3 +38,14 @@ func (h *Helper) EnsureProperty(ctx context.Context, kind, key, name, value stri
 		return h.Store.Set(ctx, kind, key, properties, nil)
 	})
 }
+
+func (h *Helper) EnsureExists(ctx context.Context, kind, key string) error {
+	return h.Store.Transact(ctx, func(ctx context.Context) error {
+		_, err := h.Store.Get(ctx, kind, key, nil)
+		if err != data.ErrNoSuchEntity {
+			return err
+		}
+
+		return h.Store.Set(ctx, kind, key, nil, nil)
+	})
+}
