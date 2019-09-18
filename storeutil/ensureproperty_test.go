@@ -50,7 +50,7 @@ func TestHelper_EnsureProperty_GetErr(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b")
+	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b", true)
 	if !getCalled {
 		t.Error("Expected EnsureProperty to call Get, not called")
 	}
@@ -120,7 +120,7 @@ func TestHelper_EnsureProperty_SetErr(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b")
+	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b", true)
 	if !getCalled {
 		t.Error("Expected EnsureProperty to call Get, not called")
 	}
@@ -176,7 +176,7 @@ func TestHelper_EnsureProperty_PropertyAlreadySet(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b")
+	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b", true)
 	if !getCalled {
 		t.Error("Expected EnsureProperty to call Get, not called")
 	}
@@ -293,7 +293,7 @@ func TestHelper_EnsureProperty(t *testing.T) {
 				Store: ps,
 			}
 
-			err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b")
+			err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b", true)
 			if !getCalled {
 				t.Error("Expected EnsureProperty to call Get, not called")
 			}
@@ -377,7 +377,72 @@ func TestHelper_EnsureProperty_EntityAbsent(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b")
+	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b", true)
+	if !getCalled {
+		t.Error("Expected EnsureProperty to call Get, not called")
+	}
+	if !setCalled {
+		t.Error("Expected EnsureProperty to call Set, not called")
+	}
+	if err != nil {
+		t.Errorf("Expected EnsureProperty to return nil error, got '%s'", err)
+	}
+}
+
+func TestHelper_EnsureProperty_NoTransact(t *testing.T) {
+	t.Parallel()
+
+	getCalled := false
+	setCalled := false
+	ps := testhelpers.NewPersistentStore(t)
+
+	ps.GetFunc = func(ctx context.Context, kind, key string, v interface{}) (properties []data.Property, e error) {
+		getCalled = true
+
+		expectedKind := "bluh"
+		if kind != expectedKind {
+			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
+		}
+
+		expectedKey := "bar/baz"
+		if key != expectedKey {
+			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
+		}
+
+		return nil, data.ErrNoSuchEntity
+	}
+
+	ps.SetFunc = func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+		setCalled = true
+
+		expectedKind := "bluh"
+		if kind != expectedKind {
+			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
+		}
+
+		expectedKey := "bar/baz"
+		if key != expectedKey {
+			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
+		}
+
+		expectedProperties := []data.Property{
+			{
+				Name:  "a",
+				Value: "b",
+			},
+		}
+		if !reflect.DeepEqual(properties, expectedProperties) {
+			t.Error("Properties did not match expected properties")
+		}
+
+		return nil
+	}
+
+	h := &Helper{
+		Store: ps,
+	}
+
+	err := h.EnsureProperty(context.Background(), "bluh", "bar/baz", "a", "b", false)
 	if !getCalled {
 		t.Error("Expected EnsureProperty to call Get, not called")
 	}

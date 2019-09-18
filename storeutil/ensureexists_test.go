@@ -49,7 +49,7 @@ func TestHelper_EnsureExists_GetErr(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureExists(context.Background(), "bluh", "bar/baz")
+	err := h.EnsureExists(context.Background(), "bluh", "bar/baz", true)
 	if !getCalled {
 		t.Error("Expected EnsureExists to call Get, not called")
 	}
@@ -119,7 +119,7 @@ func TestHelper_EnsureExists_SetErr(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureExists(context.Background(), "bluh", "bar/baz")
+	err := h.EnsureExists(context.Background(), "bluh", "bar/baz", true)
 	if !getCalled {
 		t.Error("Expected EnsureExists to call Get, not called")
 	}
@@ -175,7 +175,7 @@ func TestHelper_EnsureExists_AlreadyExists(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureExists(context.Background(), "bluh", "bar/baz")
+	err := h.EnsureExists(context.Background(), "bluh", "bar/baz", true)
 	if !getCalled {
 		t.Error("Expected EnsureExists to call Get, not called")
 	}
@@ -248,7 +248,66 @@ func TestHelper_EnsureExists_EntityAbsent(t *testing.T) {
 		Store: ps,
 	}
 
-	err := h.EnsureExists(context.Background(), "bluh", "bar/baz")
+	err := h.EnsureExists(context.Background(), "bluh", "bar/baz", true)
+	if !getCalled {
+		t.Error("Expected EnsureExists to call Get, not called")
+	}
+	if !setCalled {
+		t.Error("Expected EnsureExists to call Set, not called")
+	}
+	if err != nil {
+		t.Errorf("Expected EnsureExists to return nil error, got '%s'", err)
+	}
+}
+
+func TestHelper_EnsureExists_EntityAbsent_NoTransact(t *testing.T) {
+	t.Parallel()
+
+	getCalled := false
+	setCalled := false
+	ps := testhelpers.NewPersistentStore(t)
+
+	ps.GetFunc = func(ctx context.Context, kind, key string, v interface{}) (properties []data.Property, e error) {
+		getCalled = true
+
+		expectedKind := "bluh"
+		if kind != expectedKind {
+			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
+		}
+
+		expectedKey := "bar/baz"
+		if key != expectedKey {
+			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
+		}
+
+		return nil, data.ErrNoSuchEntity
+	}
+
+	ps.SetFunc = func(ctx context.Context, kind, key string, properties []data.Property, v interface{}) error {
+		setCalled = true
+
+		expectedKind := "bluh"
+		if kind != expectedKind {
+			t.Errorf("Expected kind '%s', got '%s'", expectedKind, kind)
+		}
+
+		expectedKey := "bar/baz"
+		if key != expectedKey {
+			t.Errorf("Expected key '%s', got '%s'", expectedKey, key)
+		}
+
+		if properties != nil {
+			t.Error("Expected empty property list")
+		}
+
+		return nil
+	}
+
+	h := &Helper{
+		Store: ps,
+	}
+
+	err := h.EnsureExists(context.Background(), "bluh", "bar/baz", false)
 	if !getCalled {
 		t.Error("Expected EnsureExists to call Get, not called")
 	}

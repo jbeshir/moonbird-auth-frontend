@@ -9,8 +9,8 @@ type Helper struct {
 	Store PersistentStore
 }
 
-func (h *Helper) EnsureProperty(ctx context.Context, kind, key, name, value string) error {
-	return h.Store.Transact(ctx, func(ctx context.Context) error {
+func (h *Helper) EnsureProperty(ctx context.Context, kind, key, name, value string, transact bool) error {
+	return h.maybeTransact(ctx, func(ctx context.Context) error {
 		properties, err := h.Store.Get(ctx, kind, key, nil)
 		if err != nil && err != data.ErrNoSuchEntity {
 			return err
@@ -36,16 +36,24 @@ func (h *Helper) EnsureProperty(ctx context.Context, kind, key, name, value stri
 		}
 
 		return h.Store.Set(ctx, kind, key, properties, nil)
-	})
+	}, transact)
 }
 
-func (h *Helper) EnsureExists(ctx context.Context, kind, key string) error {
-	return h.Store.Transact(ctx, func(ctx context.Context) error {
+func (h *Helper) EnsureExists(ctx context.Context, kind, key string, transact bool) error {
+	return h.maybeTransact(ctx, func(ctx context.Context) error {
 		_, err := h.Store.Get(ctx, kind, key, nil)
 		if err != data.ErrNoSuchEntity {
 			return err
 		}
 
 		return h.Store.Set(ctx, kind, key, nil, nil)
-	})
+	}, transact)
+}
+
+func (h *Helper) maybeTransact(ctx context.Context, f func(context.Context) error, transact bool) error {
+	if transact {
+		return h.Store.Transact(ctx, f)
+	} else {
+		return f(ctx)
+	}
 }
