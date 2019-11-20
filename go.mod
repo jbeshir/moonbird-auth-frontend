@@ -1,7 +1,7 @@
 module github.com/jbeshir/moonbird-auth-frontend
 
 require (
-	cloud.google.com/go v0.46.3
+	cloud.google.com/go v0.49.0
 	github.com/pkg/errors v0.8.1
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
