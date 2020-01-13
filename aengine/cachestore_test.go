@@ -189,7 +189,7 @@ func TestBinaryMemcacheCodec_Marshal(t *testing.T) {
 		0x3F, 0xB9, 0x99, 0x99, 0x99, 0x99, 0x99, 0x9A, // Big-endian 0.1
 	}
 	if !reflect.DeepEqual(key, expectedKey) {
-		t.Errorf("Incorrect generated marshalled value; expected %x, was %x", expectedKey, key)
+		t.Errorf("Incorrect generated marshalled value; expected %v, was %v", expectedKey, key)
 	}
 }
 
@@ -218,7 +218,7 @@ func TestBinaryMemcacheCodec_Unmarshal(t *testing.T) {
 
 	expectedData := [2]float64{0.4, 0.1}
 	if !reflect.DeepEqual(data, expectedData) {
-		t.Errorf("Incorrect generated marshalled value; expected %x, was %x", expectedData, data)
+		t.Errorf("Incorrect generated marshalled value; expected %v, was %v", expectedData, data)
 	}
 }
 
