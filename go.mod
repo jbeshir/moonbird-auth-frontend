@@ -6,5 +6,5 @@ require (
 	github.com/sirupsen/logrus v1.4.2
 	golang.org/x/oauth2 v0.0.0-20190604053449-0f29369cfe45
 	google.golang.org/api v0.10.0 // indirect
-	google.golang.org/appengine v1.6.3
+	google.golang.org/appengine v1.6.5
 )
