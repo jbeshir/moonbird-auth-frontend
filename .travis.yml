@@ -1,4 +1,7 @@
 language: go
+go:
+ - "1.13"
+
 cache:
   directories:
     - "$HOME/google-cloud-sdk/"
